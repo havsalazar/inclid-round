@@ -1,0 +1,18 @@
+# ESP-IDF build output and downloaded components (restored by idf.py build)
+rounded_fw/build/
+rounded_fw/managed_components/
+rounded_fw/sdkconfig.old
+
+# Logs written by rounded_fw/tools/flash.sh
+rounded_fw/tools/*.log
+
+# LVGL Pro Editor preview build
+roundedui/preview-build/
+roundedui/preview-bin/
+
+# PC simulator build
+roundedui/build/
+
+# OS / editor
+.DS_Store
+Thumbs.db

@@ -1,0 +1,15 @@
+list(
+  APPEND
+  LV_EDITOR_PROJECT_SOURCES
+  ${CMAKE_CURRENT_LIST_DIR}/components/battery_indicator_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/components/pill_button_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/fonts/font_lean_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/fonts/font_small_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/fonts/font_speed_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/fonts/font_title_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/images/icon_bolt_charging_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/images/icon_cog_data.c
+  ${CMAKE_CURRENT_LIST_DIR}/roundedui_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/roundedui.c
+  ${CMAKE_CURRENT_LIST_DIR}/screens/lean_screen_gen.c
+  ${CMAKE_CURRENT_LIST_DIR}/screens/settings_screen_gen.c)

@@ -1,0 +1,260 @@
+<!-- Main riding screen for the round 466x466 AMOLED.
+
+     The rim:   left arc = lean to the left, right arc = lean to the right. Both fill
+                upward from the bottom: blue up to lean_warn, amber up to lean_danger,
+                red beyond. A thin red stripe outside each arc marks the danger zone.
+     The center, top to bottom: battery, big lean angle, GPS speed, G bar, settings cog.
+     Max lean per side sits inside each arc. Long-press anywhere to reset the max values.
+
+     The screen is a circle, so items are placed by their offset from the center
+     instead of a flex column: the usable width depends on the height. -->
+<screen>
+	<consts>
+		<!-- Arc angles: LVGL measures from 3 o'clock, clockwise -->
+		<int name="left_arc_start" value="{180 - lean_arc_half_span}"/>
+		<int name="left_arc_end" value="{180 + lean_arc_half_span}"/>
+		<int name="right_arc_start" value="{360 - lean_arc_half_span}"/>
+		<int name="right_arc_end" value="{lean_arc_half_span}"/>
+		<!-- Where lean_danger falls on each arc -->
+		<int name="danger_span" value="{2 * lean_arc_half_span * (lean_limit - lean_danger) / lean_limit}"/>
+		<!-- Angle from the bottom end of an arc to lean_warn and to lean_danger -->
+		<int name="warn_angle" value="{2 * lean_arc_half_span * lean_warn / lean_limit}"/>
+		<int name="danger_angle" value="{2 * lean_arc_half_span * lean_danger / lean_limit}"/>
+		<int name="lean_arc_size" value="{display_size - 2 * lean_arc_inset - 10}"/>
+		<int name="danger_arc_width" value="4"/>
+		<int name="cog_button_size" value="60"/>
+	</consts>
+
+	<styles>
+
+		<!-- Rim arcs -->
+		<style name="style_lean_track" arc_color="{color_track}" arc_width="{lean_arc_width}"
+			arc_rounded="true" bg_opa="0" border_width="0" pad_all="0"/>
+		<style name="style_lean_fill" arc_color="{color_accent}" arc_width="{lean_arc_width}"
+			arc_rounded="true"/>
+		<!-- Each side is three stacked arcs with fixed colors (red full range, amber up
+		     to lean_danger, blue up to lean_warn; LVGL clamps each value to its max), so
+		     the colors are bands along the rim. Nothing is ever restyled: changing a
+		     style on a 444 px arc redraws ~90% of the screen, a value change only the
+		     strip that moved. -->
+		<style name="style_lean_fill_warn" arc_color="{color_warn}"/>
+		<style name="style_lean_fill_danger" arc_color="{color_danger}"/>
+		<!-- The upper arcs of a stack draw no track of their own -->
+		<style name="style_lean_overlay" arc_opa="0"/>
+		<!-- No knob: the fill alone shows the lean -->
+		<style name="style_no_knob" bg_opa="0" border_width="0" shadow_width="0" outline_width="0"
+			pad_all="0"/>
+		<style name="style_danger_zone" arc_color="{color_danger}" arc_width="{danger_arc_width}"
+			arc_rounded="false" arc_opa="70%" bg_opa="0" border_width="0" pad_all="0"/>
+		<style name="style_arc_hidden_indicator" arc_opa="0"/>
+
+		<style name="style_lean_value" text_font="font_lean"/>
+		<style name="style_lean_value_warn" text_color="{color_warn}"/>
+		<style name="style_lean_value_danger" text_color="{color_danger}"/>
+		<style name="style_speed_value" text_font="font_speed" text_color="{color_text}"/>
+
+		<!-- G bar -->
+		<style name="style_g_track" bg_color="{color_track}" bg_opa="100%" radius="7" pad_all="0"/>
+		<style name="style_g_fill" bg_color="{color_ok}" bg_opa="100%" radius="7"/>
+		<style name="style_g_fill_brake" bg_color="{color_danger}"/>
+		<!-- Zero mark in the middle of the G bar -->
+		<style name="style_g_zero" bg_color="{color_text_muted}" bg_opa="100%" border_width="0"
+			radius="0" pad_all="0"/>
+
+		<!-- Settings cog -->
+		<style name="style_cog" bg_opa="0" border_width="0" shadow_width="0" radius="{cog_button_size / 2}"
+			pad_all="0"/>
+		<style name="style_cog_pressed" bg_color="{color_track}" bg_opa="100%"/>
+	</styles>
+
+	<view extends="lv_obj" scrollable="false">
+		<style name="style_screen"/>
+
+		<!-- Hold anywhere on the screen to reset the max lean memories -->
+		<set_subject_event trigger="long_pressed" subject="subject_lean_max_left" value="0"/>
+		<set_subject_event trigger="long_pressed" subject="subject_lean_max_right" value="0"/>
+
+		<!-- ============ Rim: lean to the left, fills clockwise from the bottom ============
+		     Bottom to top of the stack: red (with the track), amber, blue.
+		     Not clickable: a touch must never change the lean. -->
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{left_arc_start}" bg_end_angle="{left_arc_end}"
+			mode="normal" min_value="0" max_value="{lean_limit * 10}"
+			value="{subject_lean_x10 LT 0 ? 0 - subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_lean_fill_danger" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{left_arc_start}" bg_end_angle="{left_arc_start + danger_angle}"
+			mode="normal" min_value="0" max_value="{lean_danger * 10}"
+			value="{subject_lean_x10 LT 0 ? 0 - subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_overlay"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_lean_fill_warn" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{left_arc_start}" bg_end_angle="{left_arc_start + warn_angle}"
+			mode="normal" min_value="0" max_value="{lean_warn * 10}"
+			value="{subject_lean_x10 LT 0 ? 0 - subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_overlay"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+
+		<!-- ============ Rim: lean to the right, fills counterclockwise from the bottom ============
+		     The bottom end is right_arc_end, so the shorter arcs end there too. -->
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{right_arc_start}" bg_end_angle="{right_arc_end}"
+			mode="reverse" min_value="0" max_value="{lean_limit * 10}"
+			value="{subject_lean_x10 GT 0 ? subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_lean_fill_danger" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{right_arc_end - danger_angle + 360}" bg_end_angle="{right_arc_end}"
+			mode="reverse" min_value="0" max_value="{lean_danger * 10}"
+			value="{subject_lean_x10 GT 0 ? subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_overlay"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_lean_fill_warn" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+		<lv_arc width="{lean_arc_size}" height="{lean_arc_size}" align="center" clickable="false"
+			bg_start_angle="{right_arc_end - warn_angle + 360}" bg_end_angle="{right_arc_end}"
+			mode="reverse" min_value="0" max_value="{lean_warn * 10}"
+			value="{subject_lean_x10 GT 0 ? subject_lean_x10 : 0}">
+			<style name="style_lean_track"/>
+			<style name="style_lean_overlay"/>
+			<style name="style_lean_fill" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+
+		<!-- Danger zone stripes just outside the top end of each arc -->
+		<lv_arc width="{display_size - 2 * lean_arc_inset}" height="{display_size - 2 * lean_arc_inset}"
+			align="center" clickable="false"
+			bg_start_angle="{left_arc_end - danger_span}" bg_end_angle="{left_arc_end}">
+			<style name="style_danger_zone"/>
+			<style name="style_arc_hidden_indicator" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+		<lv_arc width="{display_size - 2 * lean_arc_inset}" height="{display_size - 2 * lean_arc_inset}"
+			align="center" clickable="false"
+			bg_start_angle="{right_arc_start}" bg_end_angle="{right_arc_start + danger_span}">
+			<style name="style_danger_zone"/>
+			<style name="style_arc_hidden_indicator" selector="indicator"/>
+			<style name="style_no_knob" selector="knob"/>
+		</lv_arc>
+
+		<!-- ============ Max lean, inside each arc ============ -->
+		<lv_obj width="content" height="content" align="left_mid" x="48" flex_flow="column"
+			scrollable="false" clickable="false" style_flex_cross_place="center">
+			<style name="style_transparent"/>
+			<lv_label text="MAX L">
+				<style name="style_text_muted"/>
+			</lv_label>
+			<lv_label text="{subject_lean_max_left == 0 ? '--°' : subject_lean_max_left . '°'}">
+				<style name="style_value"/>
+			</lv_label>
+		</lv_obj>
+		<lv_obj width="content" height="content" align="right_mid" x="-48" flex_flow="column"
+			scrollable="false" clickable="false" style_flex_cross_place="center">
+			<style name="style_transparent"/>
+			<lv_label text="MAX R">
+				<style name="style_text_muted"/>
+			</lv_label>
+			<lv_label text="{subject_lean_max_right == 0 ? '--°' : subject_lean_max_right . '°'}">
+				<style name="style_value"/>
+			</lv_label>
+		</lv_obj>
+
+		<!-- ============ Battery, top center ============ -->
+		<battery_indicator align="top_mid" y="26"/>
+
+		<!-- ============ Lean angle, just above the center ============ -->
+		<lv_label align="center" y="-52" text="{subject_lean_abs_deg . '°'}">
+			<style name="style_lean_value"/>
+			<style name="style_lean_value_warn" enabled="{subject_lean_abs_deg GE lean_warn}"/>
+			<style name="style_lean_value_danger" enabled="{subject_lean_abs_deg GE lean_danger}"/>
+		</lv_label>
+
+		<!-- HOLD STILL while the IMU calibrates, under the angle -->
+		<lv_label align="center" y="14" text="HOLD STILL" hidden="{subject_imu_calibrating == 0}"
+			style_text_color="{color_warn}">
+			<style name="style_value"/>
+		</lv_label>
+
+		<!-- ============ GPS speed, just below the center ============
+		     Two labels for the number: the speed with a fix, two dashes without one -->
+		<lv_obj width="content" height="content" align="center" y="56" flex_flow="row"
+			scrollable="false" clickable="false" style_flex_cross_place="end"
+			style_pad_column="{space_sm}">
+			<style name="style_transparent"/>
+			<lv_label text="{subject_speed_kmh}" hidden="{subject_gps_fix == 0}">
+				<style name="style_speed_value"/>
+			</lv_label>
+			<lv_label text="--" hidden="{subject_gps_fix == 1}">
+				<style name="style_speed_value"/>
+			</lv_label>
+			<lv_label text="{subject_gps_fix == 1 ? 'km/h' : 'no GPS'}" style_pad_bottom="10">
+				<style name="style_text_muted"/>
+			</lv_label>
+		</lv_obj>
+
+		<!-- ============ G bar: braking to the left (red), accelerating to the right (green) ============
+		     Hidden from the settings screen with subject_show_g_bar -->
+		<lv_obj width="content" height="content" align="center" y="122" flex_flow="column"
+			scrollable="false" clickable="false" style_flex_cross_place="center"
+			style_pad_row="{space_xs}" hidden="{subject_show_g_bar == 0}">
+			<style name="style_transparent"/>
+
+			<!-- One of the two magnitudes is always 0, so the sum is the absolute value -->
+			<lv_label text="{(subject_g_accel_cg + subject_g_decel_cg) / 100 . '.' . (subject_g_accel_cg + subject_g_decel_cg) % 100 / 10 . ' G'}">
+				<style name="style_value"/>
+			</lv_label>
+
+			<lv_obj width="content" height="content" flex_flow="row" scrollable="false"
+				clickable="false" style_flex_cross_place="center" style_pad_column="{space_sm}">
+				<style name="style_transparent"/>
+				<lv_label text="BRK">
+					<style name="style_text_muted"/>
+				</lv_label>
+
+				<lv_obj width="{g_bar_width}" height="{g_bar_height}" scrollable="false"
+					clickable="false">
+					<style name="style_transparent"/>
+					<lv_bar width="100%" height="100%" orientation="horizontal" mode="symmetrical"
+						min_value="{-g_full_scale}" max_value="{g_full_scale}"
+						bind_value="subject_accel_cg">
+						<style name="style_g_track"/>
+						<style name="style_g_fill" selector="indicator"/>
+						<style name="style_g_fill_brake" selector="indicator"
+							enabled="{subject_accel_cg LT 0}"/>
+					</lv_bar>
+					<lv_obj width="2" height="100%" align="center" clickable="false">
+						<style name="style_g_zero"/>
+					</lv_obj>
+				</lv_obj>
+
+				<lv_label text="ACC">
+					<style name="style_text_muted"/>
+				</lv_label>
+			</lv_obj>
+		</lv_obj>
+
+		<!-- ============ Settings cog, bottom center ============ -->
+		<lv_button width="{cog_button_size}" height="{cog_button_size}" align="bottom_mid" y="-18">
+			<style name="style_cog"/>
+			<style name="style_cog_pressed" selector="pressed"/>
+			<lv_image src="icon_cog" align="center"/>
+			<screen_create_event screen="settings_screen" anim_type="fade_in" duration="200"/>
+		</lv_button>
+	</view>
+</screen>

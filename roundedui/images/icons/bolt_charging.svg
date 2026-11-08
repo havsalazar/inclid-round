@@ -1,0 +1,5 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="14" height="20" viewBox="0 0 14 20">
+  <!-- Charging bolt beside the battery: amber with a dark outline -->
+  <path d="M8.8 0.8 L1.2 11.2 H6.4 L5.2 19.2 L12.8 8.4 H7.6 Z"
+        fill="#ffb020" stroke="#1c2335" stroke-width="1.2" stroke-linejoin="round"/>
+</svg>

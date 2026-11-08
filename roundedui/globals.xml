@@ -1,0 +1,120 @@
+<globals>
+    <api>
+        <!-- Add <enumdefs> here -->
+    </api>
+
+    <consts>
+        <!-- Round 466x466 AMOLED: black background (AMOLED pixels off = less power, best contrast) -->
+        <color name="color_bg" value="0x000000"/>
+        <color name="color_track" value="0x1e2438"/>
+        <color name="color_accent" value="0x2f6bff"/>
+        <color name="color_accent_text" value="0x5c8cff"/>
+        <color name="color_text" value="0xf2f4f8"/>
+        <color name="color_text_muted" value="0x9aa4c0"/>
+        <color name="color_ok" value="0x3ad070"/>
+        <color name="color_warn" value="0xffb020"/>
+        <color name="color_danger" value="0xff4a40"/>
+
+        <!-- Spacing -->
+        <int name="space_xs" value="4"/>
+        <int name="space_sm" value="8"/>
+        <int name="space_md" value="12"/>
+        <int name="space_lg" value="20"/>
+
+        <!-- Display: a 466 px circle -->
+        <int name="display_size" value="466"/>
+
+        <!-- Lean side bars: arcs along the rim, each filling upward from the bottom.
+             Full bar at lean_limit degrees; beyond it the bar stays full and the number
+             still shows the real angle. -->
+        <int name="lean_limit" value="60"/>
+        <int name="lean_warn" value="35"/>
+        <int name="lean_danger" value="45"/>
+        <int name="lean_arc_inset" value="6"/>
+        <int name="lean_arc_width" value="26"/>
+        <!-- Half the angle span of each side arc, centered on 9 and 3 o'clock -->
+        <int name="lean_arc_half_span" value="58"/>
+
+        <!-- G bar: full scale in 1/100 g on each side (150 = 1.5 g) -->
+        <int name="g_full_scale" value="150"/>
+        <!-- Kept narrow: near the bottom of the circle the rim arcs close in -->
+        <int name="g_bar_width" value="170"/>
+        <int name="g_bar_height" value="14"/>
+    </consts>
+
+    <subjects>
+        <!-- ===== Written by the firmware: IMU ===== -->
+        <!-- Lean (roll) angle in whole degrees. Negative = leaning left, positive = right -->
+        <int name="subject_lean_deg" value="0" min_value="-90" max_value="90"/>
+        <!-- The same without the sign, for the big readout and the warning colors -->
+        <int name="subject_lean_abs_deg" value="0" min_value="0" max_value="90"/>
+        <!-- Signed lean in tenths of a degree, for the side bars: they move in fine steps -->
+        <int name="subject_lean_x10" value="0" min_value="-900" max_value="900"/>
+        <!-- Maximum lean seen on each side, in degrees. Long-press the screen to reset -->
+        <int name="subject_lean_max_left" value="0" min_value="0" max_value="90"/>
+        <int name="subject_lean_max_right" value="0" min_value="0" max_value="90"/>
+        <!-- Longitudinal acceleration in 1/100 g. Positive = accelerating, negative = braking -->
+        <int name="subject_accel_cg" value="0" min_value="-300" max_value="300"/>
+        <!-- The same split into two magnitudes (one of them is always 0), in 1/100 g -->
+        <int name="subject_g_accel_cg" value="0" min_value="0" max_value="300"/>
+        <int name="subject_g_decel_cg" value="0" min_value="0" max_value="300"/>
+
+        <!-- ===== Written by the firmware: GPS ===== -->
+        <!-- Ground speed in km/h -->
+        <int name="subject_speed_kmh" value="0" min_value="0" max_value="400"/>
+        <!-- 1 while the GPS has a position fix; without it the speed shows two dashes -->
+        <int name="subject_gps_fix" value="0" min_value="0" max_value="1"/>
+
+        <!-- ===== Written by the firmware: battery ===== -->
+        <int name="subject_battery_pct" value="100" min_value="0" max_value="100"/>
+        <!-- 1 while the charger is charging the battery -->
+        <int name="subject_battery_charging" value="0" min_value="0" max_value="1"/>
+
+        <!-- ===== Settings: requests and preferences =====
+             Requests: the UI sets them to 1, the firmware acts and sets them back to 0 -->
+        <int name="subject_imu_cal_request" value="0" min_value="0" max_value="1"/>
+        <!-- Written by the firmware: 1 while the IMU calibrates (keep the bike still and upright) -->
+        <int name="subject_imu_calibrating" value="0" min_value="0" max_value="1"/>
+        <int name="subject_gps_cal_request" value="0" min_value="0" max_value="1"/>
+        <!-- Written by the firmware: 1 while the GPS is being reset / searching after a request -->
+        <int name="subject_gps_calibrating" value="0" min_value="0" max_value="1"/>
+        <!-- Power off: the firmware turns the display off and goes to deep sleep -->
+        <int name="subject_power_off_request" value="0" min_value="0" max_value="1"/>
+        <!-- AMOLED brightness in percent. The BRIGHTNESS button steps 25 / 50 / 75 / 100 -->
+        <int name="subject_brightness_pct" value="75" min_value="25" max_value="100"/>
+        <!-- 1 = show the acceleration / braking G bar on the main screen -->
+        <int name="subject_show_g_bar" value="1" min_value="0" max_value="1"/>
+    </subjects>
+
+    <images>
+        <convert src="images/icons/bolt_charging.svg" dest="images/icons/bolt_charging.png" width="14"/>
+        <data name="icon_bolt_charging" src_path="images/icons/bolt_charging.png" color_format="argb8888"/>
+        <convert src="images/icons/cog.svg" dest="images/icons/cog.png" width="36"/>
+        <data name="icon_cog" src_path="images/icons/cog.png" color_format="argb8888"/>
+    </images>
+
+    <fonts>
+        <!-- bpp="8" on the fonts that change while riding: LVGL blends 8 bpp glyphs
+             straight from flash, but converts 4 bpp glyphs to 8 bpp on every draw. For
+             the 110 px number that conversion was ~75% of each frame's render time. -->
+        <!-- Big lean angle: digits and the degree sign only, to keep flash small -->
+        <bin name="font_lean" src_path="fonts/Montserrat-Bold.ttf" size="110" bpp="8"
+             range="0x30-0x39" symbols="°" as_file="false"/>
+        <!-- GPS speed -->
+        <bin name="font_speed" src_path="fonts/Montserrat-Bold.ttf" size="52" bpp="8"
+             range="0x30-0x39" symbols="-" as_file="false"/>
+        <bin name="font_title" src_path="fonts/Montserrat-SemiBold.ttf" size="22" bpp="8"
+             range="0x20-0x7F" symbols="°" as_file="false"/>
+        <bin name="font_small" src_path="fonts/Montserrat-Medium.ttf" size="16" bpp="4"
+             range="0x20-0x7F" symbols="°" as_file="false"/>
+    </fonts>
+
+    <styles>
+        <!-- A plain container: no background, border, padding or radius -->
+        <style name="style_transparent" bg_opa="0" border_width="0" pad_all="0" radius="0"/>
+        <style name="style_text_muted" text_color="{color_text_muted}" text_font="font_small"/>
+        <style name="style_value" text_color="{color_text}" text_font="font_title"/>
+        <style name="style_screen" bg_color="{color_bg}" bg_opa="100%" text_color="{color_text}"
+            text_font="font_small" pad_all="0"/>
+    </styles>
+</globals>

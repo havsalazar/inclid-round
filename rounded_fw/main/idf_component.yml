@@ -1,0 +1,6 @@
+dependencies:
+  idf: ">=5.5"
+  # Must match lvgl_version in ../../roundedui/project.xml
+  lvgl/lvgl: "9.6.0"
+  # Display (CO5300 QSPI), touch (CST9217), I2C bus and brightness
+  waveshare/esp32_s3_touch_amoled_1_75: "3.0.1"

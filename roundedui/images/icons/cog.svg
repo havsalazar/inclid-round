@@ -1,0 +1,14 @@
+<svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24">
+  <!-- Settings cog: a ring with 8 teeth, light grey on the black screen -->
+  <g fill="#c0c8e0">
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(45 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(90 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(135 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(180 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(225 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(270 12 12)"/>
+    <rect x="10.2" y="1" width="3.6" height="5" rx="0.8" transform="rotate(315 12 12)"/>
+  </g>
+  <circle cx="12" cy="12" r="5.8" fill="none" stroke="#c0c8e0" stroke-width="3.6"/>
+</svg>

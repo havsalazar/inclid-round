@@ -1,0 +1,61 @@
+<!-- Battery level for the top of the round screen: a bolt while charging, "85%" and a
+     mini battery whose fill follows subject_battery_pct. -->
+<component>
+	<consts>
+		<int name="battery_body_width" value="34"/>
+		<int name="battery_body_height" value="17"/>
+		<int name="battery_tip_width" value="3"/>
+		<int name="battery_tip_height" value="8"/>
+		<!-- At or below these the fill turns amber, then red -->
+		<int name="battery_low" value="30"/>
+		<int name="battery_critical" value="15"/>
+	</consts>
+
+	<styles>
+		<style name="style_battery_body" bg_opa="0" border_color="{color_text}" border_width="2"
+			radius="4" pad_all="2"/>
+		<style name="style_battery_tip" bg_color="{color_text}" bg_opa="100%" border_width="0"
+			radius="1" pad_all="0"/>
+		<style name="style_battery_track" bg_opa="0" radius="1" pad_all="0"/>
+		<style name="style_battery_fill" bg_color="{color_ok}" bg_opa="100%" radius="1"/>
+	</styles>
+
+	<view extends="lv_obj" width="content" height="content" flex_flow="row" scrollable="false"
+		clickable="false" style_flex_cross_place="center" style_pad_column="{space_xs}">
+		<style name="style_transparent"/>
+
+		<!-- Charging bolt, left of the percentage. Hidden takes no room in the row -->
+		<lv_image src="icon_bolt_charging" hidden="{subject_battery_charging == 0}"/>
+
+		<lv_label text="{subject_battery_pct . '%'}">
+			<style name="style_text_muted"/>
+		</lv_label>
+
+		<!-- Body and tip, touching -->
+		<lv_obj width="content" height="content" flex_flow="row" scrollable="false"
+			clickable="false" style_flex_cross_place="center">
+			<style name="style_transparent"/>
+
+			<lv_obj width="{battery_body_width}" height="{battery_body_height}" scrollable="false"
+				clickable="false">
+				<style name="style_battery_body"/>
+
+				<lv_bar width="100%" height="100%" min_value="0" max_value="100"
+					bind_value="subject_battery_pct"
+					style_bg_color-indicator="{subject_battery_pct LE battery_critical ? color_danger : (subject_battery_pct LE battery_low ? color_warn : color_ok)}">
+					<style name="style_battery_track"/>
+					<style name="style_battery_fill" selector="indicator"/>
+				</lv_bar>
+			</lv_obj>
+
+			<lv_obj width="{battery_tip_width}" height="{battery_tip_height}" clickable="false">
+				<style name="style_battery_tip"/>
+			</lv_obj>
+		</lv_obj>
+	</view>
+
+	<previews>
+		<preview name="on_screen_bg" width="130" height="40" style_bg_color="0x000000"
+			style_pad_all="8"/>
+	</previews>
+</component>
