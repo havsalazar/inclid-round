@@ -99,6 +99,7 @@ lv_subject_t * subject_g_accel_cg;
 lv_subject_t * subject_g_decel_cg;
 lv_subject_t * subject_speed_kmh;
 lv_subject_t * subject_gps_fix;
+lv_subject_t * subject_gps_sats;
 lv_subject_t * subject_battery_pct;
 lv_subject_t * subject_battery_charging;
 lv_subject_t * subject_imu_cal_request;
@@ -257,6 +258,10 @@ void roundedui_init_gen(const char * asset_path)
     lv_subject_set_min_value_int(subject_gps_fix, 0);
     lv_subject_set_max_value_int(subject_gps_fix, 1);
     lv_subject_set_int(subject_gps_fix, 0);
+    subject_gps_sats = lv_subject_create(LV_SUBJECT_TYPE_INT);
+    lv_subject_set_min_value_int(subject_gps_sats, -1);
+    lv_subject_set_max_value_int(subject_gps_sats, 99);
+    lv_subject_set_int(subject_gps_sats, -1);
     subject_battery_pct = lv_subject_create(LV_SUBJECT_TYPE_INT);
     lv_subject_set_min_value_int(subject_battery_pct, 0);
     lv_subject_set_max_value_int(subject_battery_pct, 100);
@@ -330,6 +335,7 @@ void roundedui_init_gen(const char * asset_path)
     lv_xml_register_subject(NULL, "subject_g_decel_cg", subject_g_decel_cg);
     lv_xml_register_subject(NULL, "subject_speed_kmh", subject_speed_kmh);
     lv_xml_register_subject(NULL, "subject_gps_fix", subject_gps_fix);
+    lv_xml_register_subject(NULL, "subject_gps_sats", subject_gps_sats);
     lv_xml_register_subject(NULL, "subject_battery_pct", subject_battery_pct);
     lv_xml_register_subject(NULL, "subject_battery_charging", subject_battery_charging);
     lv_xml_register_subject(NULL, "subject_imu_cal_request", subject_imu_cal_request);

@@ -203,7 +203,17 @@
 			<lv_label text="--" hidden="{subject_gps_fix == 1}">
 				<style name="style_speed_value"/>
 			</lv_label>
-			<lv_label text="{subject_gps_fix == 1 ? 'km/h' : 'no GPS'}" style_pad_bottom="10">
+			<!-- One of three: km/h with a fix, the satellite count while searching,
+			     no GPS when the module isn't answering -->
+			<lv_label text="km/h" style_pad_bottom="10" hidden="{subject_gps_fix == 0}">
+				<style name="style_text_muted"/>
+			</lv_label>
+			<lv_label text="{'searching ' . subject_gps_sats . ' sat'}" style_pad_bottom="10"
+				hidden="{subject_gps_fix == 1 OR subject_gps_sats LT 0}">
+				<style name="style_text_muted"/>
+			</lv_label>
+			<lv_label text="no GPS" style_pad_bottom="10"
+				hidden="{subject_gps_fix == 1 OR subject_gps_sats GE 0}">
 				<style name="style_text_muted"/>
 			</lv_label>
 		</lv_obj>

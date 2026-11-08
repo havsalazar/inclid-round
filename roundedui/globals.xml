@@ -64,6 +64,8 @@
         <int name="subject_speed_kmh" value="0" min_value="0" max_value="400"/>
         <!-- 1 while the GPS has a position fix; without it the speed shows two dashes -->
         <int name="subject_gps_fix" value="0" min_value="0" max_value="1"/>
+        <!-- Satellites in view while searching; -1 when the GPS module is not answering -->
+        <int name="subject_gps_sats" value="-1" min_value="-1" max_value="99"/>
 
         <!-- ===== Written by the firmware: battery ===== -->
         <int name="subject_battery_pct" value="100" min_value="0" max_value="100"/>

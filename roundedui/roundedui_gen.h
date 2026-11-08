@@ -148,6 +148,7 @@ extern lv_subject_t * subject_g_accel_cg;
 extern lv_subject_t * subject_g_decel_cg;
 extern lv_subject_t * subject_speed_kmh;
 extern lv_subject_t * subject_gps_fix;
+extern lv_subject_t * subject_gps_sats;
 extern lv_subject_t * subject_battery_pct;
 extern lv_subject_t * subject_battery_charging;
 extern lv_subject_t * subject_imu_cal_request;

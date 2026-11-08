@@ -10,7 +10,7 @@
 #include "nvs.h"
 
 #include "lvgl.h"
-#include "bsp/display.h"
+#include "display.h"
 #include "roundedui.h"
 
 static const char * TAG = "settings";
@@ -29,7 +29,7 @@ static lv_timer_t * s_save_timer;
 static void power_off_timer_cb(lv_timer_t * t)
 {
     LV_UNUSED(t);
-    bsp_display_brightness_set(0);
+    display_set_brightness(0);
     imu_sleep();
     pmu_power_off();                /* does not return */
 }
@@ -70,7 +70,7 @@ static void schedule_save(void)
 static void brightness_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(observer);
-    bsp_display_brightness_set(lv_subject_get_int(subject));
+    display_set_brightness(lv_subject_get_int(subject));
     schedule_save();
 }
 
