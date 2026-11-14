@@ -10,7 +10,8 @@
  * transaction. So the bus lock is held from the reset pulse until the first
  * successful read (gps_boot()). Once it is talking, other traffic is fine.
  *
- * Only $GxRMC is used: fix status and speed over ground.
+ * $GxRMC gives the fix status, position, UTC time and date and speed over ground;
+ * $GxGSV the satellites in view.
  *
  * CALIBRATE GPS drops the current fix and shows SEARCHING GPS... until a fresh
  * valid RMC arrives (or GPS_SEARCH_TIMEOUT_MS passes). It does not send commands
@@ -18,9 +19,12 @@
  */
 #include "gps_task.h"
 
+#include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <math.h>
+#include <sys/time.h>
+#include <time.h>
 
 #include "freertos/FreeRTOS.h"
 #include "freertos/task.h"
@@ -49,6 +53,10 @@
 #define GPS_FIX_TIMEOUT_US      (3 * 1000000LL)     /* no valid RMC for 3 s = no fix */
 #define GPS_SEARCH_TIMEOUT_MS   120000
 #define GPS_SPEED_DEADBAND_KMH  3                   /* GPS jitter when standing still */
+#define GPS_CLOCK_MAX_DRIFT_MS  2000                /* resync the system clock when it is off by more */
+/* Local time for the clock on the screen and the SD file dates, POSIX TZ format.
+ * Colombia: UTC-5 all year, no daylight saving (POSIX inverts the sign) */
+#define GPS_TIMEZONE            "<-05>5"
 
 static const char * TAG = "gps";
 
@@ -61,6 +69,9 @@ static int64_t s_last_fix_us;                       /* 0 = never */
 static volatile bool s_searching;
 static int64_t s_search_start_us;
 static int64_t s_last_ok_us;                        /* last transaction the module answered, 0 = never */
+static double s_lat, s_lon;                         /* decimal degrees, + = north / east */
+static char s_utc[16];                              /* "hh:mm:ss.ss" of the last valid RMC */
+static char s_date[12];                             /* "yyyy-mm-dd" */
 
 /* Satellites in view, from the GSV sentences: one count per constellation
  * ($GPGSV GPS, $GLGSV GLONASS, $GAGSV Galileo, $GBGSV BeiDou, $GQGSV QZSS) */
@@ -127,6 +138,60 @@ static void nmea_gsv(const char * line)
     taskEXIT_CRITICAL(&s_mux);
 }
 
+/* NMEA ddmm.mmmm / dddmm.mmmm -> decimal degrees */
+static double nmea_degrees(const char * s, bool negative)
+{
+    double v = strtod(s, NULL);
+    double deg = floor(v / 100.0);
+    deg += (v - deg * 100.0) / 60.0;
+    return negative ? -deg : deg;
+}
+
+/* Days since 1970-01-01 of a Gregorian date (newlib has no timegm()) */
+static int64_t days_from_civil(int y, int m, int d)
+{
+    y -= m <= 2;
+    int era = (y >= 0 ? y : y - 399) / 400;
+    int yoe = y - era * 400;
+    int doy = (153 * (m + (m > 2 ? -3 : 9)) + 2) / 5 + d - 1;
+    int doe = yoe * 365 + yoe / 4 - yoe / 100 + doy;
+    return (int64_t)era * 146097 + doe - 719468;
+}
+
+/* Set the system clock (UTC) from the RMC "hhmmss.ss" and "ddmmyy" fields: time(),
+ * gettimeofday() and the FAT timestamps of the files on the SD card follow it. Set on the
+ * first valid RMC, then again only if it drifts more than GPS_CLOCK_MAX_DRIFT_MS, so the
+ * polling delay (up to GPS_POLL_MS) doesn't make it jump back and forth. */
+static volatile bool s_synced;     /* the system clock has the GPS time */
+
+static void clock_sync(const char * tm, const char * date)
+{
+    if(strlen(tm) < 6 || strlen(date) != 6) return;
+
+    int hh = (tm[0] - '0') * 10 + (tm[1] - '0');
+    int mi = (tm[2] - '0') * 10 + (tm[3] - '0');
+    int ss = (tm[4] - '0') * 10 + (tm[5] - '0');
+    int ms = tm[6] == '.' ? (int)lroundf(strtof(tm + 6, NULL) * 1000.0f) : 0;
+    int dd = (date[0] - '0') * 10 + (date[1] - '0');
+    int mo = (date[2] - '0') * 10 + (date[3] - '0');
+    int yy = (date[4] - '0') * 10 + (date[5] - '0');
+    if(mo < 1 || mo > 12 || dd < 1 || dd > 31 || hh > 23 || mi > 59 || ss > 60 || ms > 999) return;
+    if(yy < 24) return;     /* the module's default date, before it has real time */
+
+    int64_t gps_ms = (days_from_civil(2000 + yy, mo, dd) * 86400 + hh * 3600 + mi * 60 + ss) * 1000 + ms;
+
+    struct timeval now;
+    gettimeofday(&now, NULL);
+    int64_t drift = (int64_t)now.tv_sec * 1000 + now.tv_usec / 1000 - gps_ms;
+    if(s_synced && drift < GPS_CLOCK_MAX_DRIFT_MS && drift > -GPS_CLOCK_MAX_DRIFT_MS) return;
+
+    struct timeval tv = { .tv_sec = (time_t)(gps_ms / 1000), .tv_usec = (suseconds_t)((gps_ms % 1000) * 1000) };
+    settimeofday(&tv, NULL);
+    if(!s_synced) ESP_LOGI(TAG, "Clock set from GPS: 20%02d-%02d-%02d %02d:%02d:%02d UTC", yy, mo, dd, hh, mi, ss);
+    else ESP_LOGI(TAG, "Clock resynced from GPS, was off by %lld ms", (long long)drift);
+    s_synced = true;
+}
+
 static void nmea_line(const char * line)
 {
     if(strlen(line) < 7 || !nmea_checksum_ok(line)) return;
@@ -136,19 +201,39 @@ static void nmea_line(const char * line)
     }
     if(strncmp(line + 3, "RMC", 3) != 0) return;   /* $GPRMC, $GNRMC ... */
 
-    char status[4], knots[16];
+    /* $xxRMC,hhmmss.ss,A,ddmm.mmmm,N,dddmm.mmmm,E,knots,course,ddmmyy,... */
+    char status[4], knots[16], tm[12], lat[16], ns[4], lon[16], ew[4], date[12];
     nmea_field(line, 2, status, sizeof(status));
-    nmea_field(line, 7, knots, sizeof(knots));
     if(status[0] != 'A') return;                    /* V = no valid fix */
+    nmea_field(line, 1, tm, sizeof(tm));
+    nmea_field(line, 3, lat, sizeof(lat));
+    nmea_field(line, 4, ns, sizeof(ns));
+    nmea_field(line, 5, lon, sizeof(lon));
+    nmea_field(line, 6, ew, sizeof(ew));
+    nmea_field(line, 7, knots, sizeof(knots));
+    nmea_field(line, 9, date, sizeof(date));
 
     int32_t kmh = (int32_t)lroundf(strtof(knots, NULL) * 1.852f);
     if(kmh < GPS_SPEED_DEADBAND_KMH) kmh = 0;
 
+    double lat_deg = nmea_degrees(lat, ns[0] == 'S');
+    double lon_deg = nmea_degrees(lon, ew[0] == 'W');
+
+    char utc[16] = "", ymd[12] = "";
+    if(strlen(tm) >= 6) snprintf(utc, sizeof(utc), "%.2s:%.2s:%s", tm, tm + 2, tm + 4);
+    if(strlen(date) == 6) snprintf(ymd, sizeof(ymd), "20%.2s-%.2s-%.2s", date + 4, date + 2, date);
+
     taskENTER_CRITICAL(&s_mux);
     s_speed_kmh = kmh;
+    s_lat = lat_deg;
+    s_lon = lon_deg;
+    memcpy(s_utc, utc, sizeof(s_utc));
+    memcpy(s_date, ymd, sizeof(s_date));
     s_last_fix_us = esp_timer_get_time();
     taskEXIT_CRITICAL(&s_mux);
     s_searching = false;
+
+    clock_sync(tm, date);
 }
 
 
@@ -297,17 +382,19 @@ esp_err_t gps_task_start(i2c_master_bus_handle_t bus)
 
 
 /*********************
- *  UI
+ *  SNAPSHOT
  *********************/
-static void ui_update_cb(lv_timer_t * t)
+void gps_get(gps_data_t * out)
 {
-    LV_UNUSED(t);
-    int32_t kmh;
     int64_t last, last_ok;
     int sats = 0;
     int64_t now = esp_timer_get_time();
     taskENTER_CRITICAL(&s_mux);
-    kmh = s_speed_kmh;
+    out->speed_kmh = s_speed_kmh;
+    out->lat = s_lat;
+    out->lon = s_lon;
+    memcpy(out->utc, s_utc, sizeof(out->utc));
+    memcpy(out->date, s_date, sizeof(out->date));
     last = s_last_fix_us;
     last_ok = s_last_ok_us;
     for(int i = 0; i < GPS_MAX_TALKERS; i++) {
@@ -315,15 +402,39 @@ static void ui_update_cb(lv_timer_t * t)
     }
     taskEXIT_CRITICAL(&s_mux);
 
-    bool fix = !s_searching && last != 0 && now - last < GPS_FIX_TIMEOUT_US;
+    out->fix = !s_searching && last != 0 && now - last < GPS_FIX_TIMEOUT_US;
     bool answering = last_ok != 0 && now - last_ok < GPS_FIX_TIMEOUT_US;
-    lv_subject_set_int(subject_gps_sats, answering ? sats : -1);
+    out->sats = answering ? sats : -1;
+    if(!out->fix) out->speed_kmh = 0;
+}
+
+/*********************
+ *  UI
+ *********************/
+static void ui_update_cb(lv_timer_t * t)
+{
+    LV_UNUSED(t);
+    gps_data_t d;
+    gps_get(&d);
+    int64_t now = esp_timer_get_time();
+    lv_subject_set_int(subject_gps_sats, d.sats);
 
     if(s_searching && (now - s_search_start_us) / 1000 > GPS_SEARCH_TIMEOUT_MS) s_searching = false;
 
-    lv_subject_set_int(subject_gps_fix, fix ? 1 : 0);
-    lv_subject_set_int(subject_speed_kmh, fix ? kmh : 0);
+    lv_subject_set_int(subject_gps_fix, d.fix ? 1 : 0);
+    lv_subject_set_int(subject_speed_kmh, d.speed_kmh);
     lv_subject_set_int(subject_gps_calibrating, s_searching ? 1 : 0);
+
+    /* Clock: local time, 12 hour format. subject_clock_hour stays 0 (hidden) until set */
+    if(s_synced) {
+        time_t t = time(NULL);
+        struct tm lt;
+        localtime_r(&t, &lt);
+        int h12 = lt.tm_hour % 12;
+        lv_subject_set_int(subject_clock_min, lt.tm_min);
+        lv_subject_set_int(subject_clock_pm, lt.tm_hour >= 12 ? 1 : 0);
+        lv_subject_set_int(subject_clock_hour, h12 == 0 ? 12 : h12);
+    }
 }
 
 /* CALIBRATE GPS sets subject_gps_cal_request to 1 */
@@ -340,6 +451,8 @@ static void cal_request_cb(lv_observer_t * observer, lv_subject_t * subject)
 
 void gps_ui_bind(void)
 {
+    setenv("TZ", GPS_TIMEZONE, 1);
+    tzset();
     lv_subject_add_observer(subject_gps_cal_request, cal_request_cb, NULL);
     lv_timer_create(ui_update_cb, 250, NULL);
 }

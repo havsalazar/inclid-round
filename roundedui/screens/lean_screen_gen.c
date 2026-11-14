@@ -24,6 +24,8 @@
 #define LEAN_ARC_SIZE (DISPLAY_SIZE - 2 * LEAN_ARC_INSET - 10)
 #define DANGER_ARC_WIDTH (4)
 #define COG_BUTTON_SIZE (60)
+#define REC_RING_SIZE (34)
+#define REC_DOT_SIZE (16)
 
 
 /**********************
@@ -41,6 +43,9 @@
 static lv_style_t * lean_screen_style_lean_value_warn_ref; /* set in create(), read by a binding callback */
 static lv_style_t * lean_screen_style_lean_value_danger_ref; /* set in create(), read by a binding callback */
 static lv_style_t * lean_screen_style_g_fill_brake_ref; /* set in create(), read by a binding callback */
+static lv_style_t * lean_screen_style_rec_ring_on_ref; /* set in create(), read by a binding callback */
+static lv_style_t * lean_screen_style_rec_ring_error_ref; /* set in create(), read by a binding callback */
+static lv_style_t * lean_screen_style_rec_dot_on_ref; /* set in create(), read by a binding callback */
 static void lean_screen_set_subject_cb(lv_event_t * e);
 static void lean_screen_set_subject_cb_2(lv_event_t * e);
 static void lean_screen_lv_arc_0_value_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
@@ -51,20 +56,28 @@ static void lean_screen_lv_arc_4_value_binding_cb(lv_observer_t * observer, lv_s
 static void lean_screen_lv_arc_5_value_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_1_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_3_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_4_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_4_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_4_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_4_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_5_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_6_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_5_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_5_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_5_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_6_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_7_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_7_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_8_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_9_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_9_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_10_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_label_10_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_11_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_obj_4_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
-static void lean_screen_lv_label_11_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_12_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
 static void lean_screen_lv_bar_0_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_obj_8_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_obj_8_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_obj_9_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_obj_9_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_lv_label_15_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject);
+static void lean_screen_set_subject_cb_3(lv_event_t * e);
 
 /**********************
  *   GLOBAL FUNCTIONS
@@ -92,6 +105,11 @@ lv_obj_t * lean_screen_create(void)
     static lv_style_t style_g_zero;
     static lv_style_t style_cog;
     static lv_style_t style_cog_pressed;
+    static lv_style_t style_rec_ring;
+    static lv_style_t style_rec_ring_on;
+    static lv_style_t style_rec_ring_error;
+    static lv_style_t style_rec_dot;
+    static lv_style_t style_rec_dot_on;
 
     static bool style_inited = false;
 
@@ -115,6 +133,11 @@ lv_obj_t * lean_screen_create(void)
         lv_style_init(&style_g_zero);
         lv_style_init(&style_cog);
         lv_style_init(&style_cog_pressed);
+        lv_style_init(&style_rec_ring);
+        lv_style_init(&style_rec_ring_on);
+        lv_style_init(&style_rec_ring_error);
+        lv_style_init(&style_rec_dot);
+        lv_style_init(&style_rec_dot_on);
 
         lv_style_set_arc_color(&style_lean_track, COLOR_TRACK);
         lv_style_set_arc_width(&style_lean_track, LEAN_ARC_WIDTH);
@@ -166,6 +189,21 @@ lv_obj_t * lean_screen_create(void)
         lv_style_set_pad_all(&style_cog, 0);
         lv_style_set_bg_color(&style_cog_pressed, COLOR_TRACK);
         lv_style_set_bg_opa(&style_cog_pressed, (255 * 100 / 100));
+        lv_style_set_bg_opa(&style_rec_ring, 0);
+        lv_style_set_border_width(&style_rec_ring, 3);
+        lv_style_set_border_color(&style_rec_ring, COLOR_TEXT_MUTED);
+        lv_style_set_radius(&style_rec_ring, REC_RING_SIZE / 2);
+        lv_style_set_pad_all(&style_rec_ring, 0);
+        lv_style_set_border_color(&style_rec_ring_on, COLOR_DANGER);
+        lv_style_set_bg_color(&style_rec_ring_on, COLOR_DANGER);
+        lv_style_set_bg_opa(&style_rec_ring_on, (255 * 25 / 100));
+        lv_style_set_border_color(&style_rec_ring_error, COLOR_WARN);
+        lv_style_set_bg_color(&style_rec_dot, COLOR_DANGER);
+        lv_style_set_bg_opa(&style_rec_dot, (255 * 100 / 100));
+        lv_style_set_border_width(&style_rec_dot, 0);
+        lv_style_set_radius(&style_rec_dot, REC_DOT_SIZE / 2);
+        lv_style_set_pad_all(&style_rec_dot, 0);
+        lv_style_set_radius(&style_rec_dot_on, 3);
 
         style_inited = true;
     }
@@ -343,24 +381,33 @@ lv_obj_t * lean_screen_create(void)
         lv_obj_set_y(battery_indicator_0, 26);
 
         lv_obj_t * lv_label_4 = lv_label_create(lv_obj_0);
-        lv_obj_set_align(lv_label_4, LV_ALIGN_CENTER);
-        lv_obj_set_y(lv_label_4, -52);
-        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_4_text_binding_cb, lv_label_4, NULL);
-        lv_obj_add_style(lv_label_4, &style_lean_value, 0);
-        lv_obj_add_style(lv_label_4, &style_lean_value_warn, 0);
-        lean_screen_style_lean_value_warn_ref = &style_lean_value_warn;
-        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_4_style_enabled_cb, lv_label_4, NULL);
-        lv_obj_add_style(lv_label_4, &style_lean_value_danger, 0);
-        lean_screen_style_lean_value_danger_ref = &style_lean_value_danger;
-        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_4_style_enabled_cb_2, lv_label_4, NULL);
+        lv_obj_set_align(lv_label_4, LV_ALIGN_TOP_MID);
+        lv_obj_set_y(lv_label_4, 50);
+        lv_subject_add_observer_obj(subject_clock_hour, lean_screen_lv_label_4_hidden_binding_cb, lv_label_4, NULL);
+        lv_subject_add_observer_obj(subject_clock_pm, lean_screen_lv_label_4_text_binding_cb, lv_label_4, NULL);
+        lv_subject_add_observer_obj(subject_clock_hour, lean_screen_lv_label_4_text_binding_cb, lv_label_4, NULL);
+        lv_subject_add_observer_obj(subject_clock_min, lean_screen_lv_label_4_text_binding_cb, lv_label_4, NULL);
+        lv_obj_add_style(lv_label_4, &style_text_muted, 0);
 
         lv_obj_t * lv_label_5 = lv_label_create(lv_obj_0);
         lv_obj_set_align(lv_label_5, LV_ALIGN_CENTER);
-        lv_obj_set_y(lv_label_5, 14);
-        lv_label_set_text(lv_label_5, "HOLD STILL");
-        lv_subject_add_observer_obj(subject_imu_calibrating, lean_screen_lv_label_5_hidden_binding_cb, lv_label_5, NULL);
-        lv_obj_set_style_text_color(lv_label_5, COLOR_WARN, 0);
-        lv_obj_add_style(lv_label_5, &style_value, 0);
+        lv_obj_set_y(lv_label_5, -52);
+        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_5_text_binding_cb, lv_label_5, NULL);
+        lv_obj_add_style(lv_label_5, &style_lean_value, 0);
+        lv_obj_add_style(lv_label_5, &style_lean_value_warn, 0);
+        lean_screen_style_lean_value_warn_ref = &style_lean_value_warn;
+        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_5_style_enabled_cb, lv_label_5, NULL);
+        lv_obj_add_style(lv_label_5, &style_lean_value_danger, 0);
+        lean_screen_style_lean_value_danger_ref = &style_lean_value_danger;
+        lv_subject_add_observer_obj(subject_lean_abs_deg, lean_screen_lv_label_5_style_enabled_cb_2, lv_label_5, NULL);
+
+        lv_obj_t * lv_label_6 = lv_label_create(lv_obj_0);
+        lv_obj_set_align(lv_label_6, LV_ALIGN_CENTER);
+        lv_obj_set_y(lv_label_6, 14);
+        lv_label_set_text(lv_label_6, "HOLD STILL");
+        lv_subject_add_observer_obj(subject_imu_calibrating, lean_screen_lv_label_6_hidden_binding_cb, lv_label_6, NULL);
+        lv_obj_set_style_text_color(lv_label_6, COLOR_WARN, 0);
+        lv_obj_add_style(lv_label_6, &style_value, 0);
 
         lv_obj_t * lv_obj_3 = lv_obj_create(lv_obj_0);
         lv_obj_set_width(lv_obj_3, LV_SIZE_CONTENT);
@@ -373,35 +420,35 @@ lv_obj_t * lean_screen_create(void)
         lv_obj_set_style_flex_cross_place(lv_obj_3, LV_FLEX_ALIGN_END, 0);
         lv_obj_set_style_pad_column(lv_obj_3, SPACE_SM, 0);
         lv_obj_add_style(lv_obj_3, &style_transparent, 0);
-        lv_obj_t * lv_label_6 = lv_label_create(lv_obj_3);
-        lv_subject_add_observer_obj(subject_speed_kmh, lean_screen_lv_label_6_text_binding_cb, lv_label_6, NULL);
-        lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_6_hidden_binding_cb, lv_label_6, NULL);
-        lv_obj_add_style(lv_label_6, &style_speed_value, 0);
-
         lv_obj_t * lv_label_7 = lv_label_create(lv_obj_3);
-        lv_label_set_text(lv_label_7, "--");
+        lv_subject_add_observer_obj(subject_speed_kmh, lean_screen_lv_label_7_text_binding_cb, lv_label_7, NULL);
         lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_7_hidden_binding_cb, lv_label_7, NULL);
         lv_obj_add_style(lv_label_7, &style_speed_value, 0);
 
         lv_obj_t * lv_label_8 = lv_label_create(lv_obj_3);
-        lv_label_set_text(lv_label_8, "km/h");
-        lv_obj_set_style_pad_bottom(lv_label_8, 10, 0);
+        lv_label_set_text(lv_label_8, "--");
         lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_8_hidden_binding_cb, lv_label_8, NULL);
-        lv_obj_add_style(lv_label_8, &style_text_muted, 0);
+        lv_obj_add_style(lv_label_8, &style_speed_value, 0);
 
         lv_obj_t * lv_label_9 = lv_label_create(lv_obj_3);
-        lv_subject_add_observer_obj(subject_gps_sats, lean_screen_lv_label_9_text_binding_cb, lv_label_9, NULL);
+        lv_label_set_text(lv_label_9, "km/h");
         lv_obj_set_style_pad_bottom(lv_label_9, 10, 0);
         lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_9_hidden_binding_cb, lv_label_9, NULL);
-        lv_subject_add_observer_obj(subject_gps_sats, lean_screen_lv_label_9_hidden_binding_cb, lv_label_9, NULL);
         lv_obj_add_style(lv_label_9, &style_text_muted, 0);
 
         lv_obj_t * lv_label_10 = lv_label_create(lv_obj_3);
-        lv_label_set_text(lv_label_10, "no GPS");
+        lv_subject_add_observer_obj(subject_gps_sats, lean_screen_lv_label_10_text_binding_cb, lv_label_10, NULL);
         lv_obj_set_style_pad_bottom(lv_label_10, 10, 0);
         lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_10_hidden_binding_cb, lv_label_10, NULL);
         lv_subject_add_observer_obj(subject_gps_sats, lean_screen_lv_label_10_hidden_binding_cb, lv_label_10, NULL);
         lv_obj_add_style(lv_label_10, &style_text_muted, 0);
+
+        lv_obj_t * lv_label_11 = lv_label_create(lv_obj_3);
+        lv_label_set_text(lv_label_11, "no GPS");
+        lv_obj_set_style_pad_bottom(lv_label_11, 10, 0);
+        lv_subject_add_observer_obj(subject_gps_fix, lean_screen_lv_label_11_hidden_binding_cb, lv_label_11, NULL);
+        lv_subject_add_observer_obj(subject_gps_sats, lean_screen_lv_label_11_hidden_binding_cb, lv_label_11, NULL);
+        lv_obj_add_style(lv_label_11, &style_text_muted, 0);
 
         lv_obj_t * lv_obj_4 = lv_obj_create(lv_obj_0);
         lv_obj_set_width(lv_obj_4, LV_SIZE_CONTENT);
@@ -415,10 +462,10 @@ lv_obj_t * lean_screen_create(void)
         lv_obj_set_style_pad_row(lv_obj_4, SPACE_XS, 0);
         lv_subject_add_observer_obj(subject_show_g_bar, lean_screen_lv_obj_4_hidden_binding_cb, lv_obj_4, NULL);
         lv_obj_add_style(lv_obj_4, &style_transparent, 0);
-        lv_obj_t * lv_label_11 = lv_label_create(lv_obj_4);
-        lv_subject_add_observer_obj(subject_g_accel_cg, lean_screen_lv_label_11_text_binding_cb, lv_label_11, NULL);
-        lv_subject_add_observer_obj(subject_g_decel_cg, lean_screen_lv_label_11_text_binding_cb, lv_label_11, NULL);
-        lv_obj_add_style(lv_label_11, &style_value, 0);
+        lv_obj_t * lv_label_12 = lv_label_create(lv_obj_4);
+        lv_subject_add_observer_obj(subject_g_accel_cg, lean_screen_lv_label_12_text_binding_cb, lv_label_12, NULL);
+        lv_subject_add_observer_obj(subject_g_decel_cg, lean_screen_lv_label_12_text_binding_cb, lv_label_12, NULL);
+        lv_obj_add_style(lv_label_12, &style_value, 0);
 
         lv_obj_t * lv_obj_5 = lv_obj_create(lv_obj_4);
         lv_obj_set_width(lv_obj_5, LV_SIZE_CONTENT);
@@ -429,9 +476,9 @@ lv_obj_t * lean_screen_create(void)
         lv_obj_set_style_flex_cross_place(lv_obj_5, LV_FLEX_ALIGN_CENTER, 0);
         lv_obj_set_style_pad_column(lv_obj_5, SPACE_SM, 0);
         lv_obj_add_style(lv_obj_5, &style_transparent, 0);
-        lv_obj_t * lv_label_12 = lv_label_create(lv_obj_5);
-        lv_label_set_text(lv_label_12, "BRK");
-        lv_obj_add_style(lv_label_12, &style_text_muted, 0);
+        lv_obj_t * lv_label_13 = lv_label_create(lv_obj_5);
+        lv_label_set_text(lv_label_13, "BRK");
+        lv_obj_add_style(lv_label_13, &style_text_muted, 0);
 
         lv_obj_t * lv_obj_6 = lv_obj_create(lv_obj_5);
         lv_obj_set_width(lv_obj_6, G_BAR_WIDTH);
@@ -460,22 +507,65 @@ lv_obj_t * lean_screen_create(void)
         lv_obj_set_clickable(lv_obj_7, false);
         lv_obj_add_style(lv_obj_7, &style_g_zero, 0);
 
-        lv_obj_t * lv_label_13 = lv_label_create(lv_obj_5);
-        lv_label_set_text(lv_label_13, "ACC");
-        lv_obj_add_style(lv_label_13, &style_text_muted, 0);
+        lv_obj_t * lv_label_14 = lv_label_create(lv_obj_5);
+        lv_label_set_text(lv_label_14, "ACC");
+        lv_obj_add_style(lv_label_14, &style_text_muted, 0);
 
         lv_obj_t * lv_button_0 = lv_button_create(lv_obj_0);
         lv_obj_set_width(lv_button_0, COG_BUTTON_SIZE);
         lv_obj_set_height(lv_button_0, COG_BUTTON_SIZE);
         lv_obj_set_align(lv_button_0, LV_ALIGN_BOTTOM_MID);
+        lv_obj_set_x(lv_button_0, 0 - (COG_BUTTON_SIZE + SPACE_XS) / 2);
         lv_obj_set_y(lv_button_0, -18);
         lv_obj_add_style(lv_button_0, &style_cog, 0);
         lv_obj_add_style(lv_button_0, &style_cog_pressed, LV_STATE_PRESSED);
-        lv_obj_t * lv_image_0 = lv_image_create(lv_button_0);
+        lv_obj_t * lv_obj_8 = lv_obj_create(lv_button_0);
+        lv_obj_set_width(lv_obj_8, REC_RING_SIZE);
+        lv_obj_set_height(lv_obj_8, REC_RING_SIZE);
+        lv_obj_set_align(lv_obj_8, LV_ALIGN_CENTER);
+        lv_obj_set_clickable(lv_obj_8, false);
+        lv_obj_set_scrollable(lv_obj_8, false);
+        lv_obj_add_style(lv_obj_8, &style_rec_ring, 0);
+        lv_obj_add_style(lv_obj_8, &style_rec_ring_on, 0);
+        lean_screen_style_rec_ring_on_ref = &style_rec_ring_on;
+        lv_subject_add_observer_obj(subject_log_state, lean_screen_lv_obj_8_style_enabled_cb, lv_obj_8, NULL);
+        lv_obj_add_style(lv_obj_8, &style_rec_ring_error, 0);
+        lean_screen_style_rec_ring_error_ref = &style_rec_ring_error;
+        lv_subject_add_observer_obj(subject_log_state, lean_screen_lv_obj_8_style_enabled_cb_2, lv_obj_8, NULL);
+        lv_obj_t * lv_obj_9 = lv_obj_create(lv_obj_8);
+        lv_obj_set_width(lv_obj_9, REC_DOT_SIZE);
+        lv_obj_set_height(lv_obj_9, REC_DOT_SIZE);
+        lv_obj_set_align(lv_obj_9, LV_ALIGN_CENTER);
+        lv_obj_set_clickable(lv_obj_9, false);
+        lv_obj_set_scrollable(lv_obj_9, false);
+        lv_subject_add_observer_obj(subject_log_state, lean_screen_lv_obj_9_hidden_binding_cb, lv_obj_9, NULL);
+        lv_obj_add_style(lv_obj_9, &style_rec_dot, 0);
+        lv_obj_add_style(lv_obj_9, &style_rec_dot_on, 0);
+        lean_screen_style_rec_dot_on_ref = &style_rec_dot_on;
+        lv_subject_add_observer_obj(subject_log_state, lean_screen_lv_obj_9_style_enabled_cb, lv_obj_9, NULL);
+
+        lv_obj_t * lv_label_15 = lv_label_create(lv_obj_8);
+        lv_label_set_text(lv_label_15, "SD");
+        lv_obj_set_align(lv_label_15, LV_ALIGN_CENTER);
+        lv_subject_add_observer_obj(subject_log_state, lean_screen_lv_label_15_hidden_binding_cb, lv_label_15, NULL);
+        lv_obj_set_style_text_color(lv_label_15, COLOR_WARN, 0);
+        lv_obj_add_style(lv_label_15, &style_text_muted, 0);
+
+        lv_obj_add_event_cb(lv_button_0, lean_screen_set_subject_cb_3, LV_EVENT_CLICKED, NULL);
+
+        lv_obj_t * lv_button_1 = lv_button_create(lv_obj_0);
+        lv_obj_set_width(lv_button_1, COG_BUTTON_SIZE);
+        lv_obj_set_height(lv_button_1, COG_BUTTON_SIZE);
+        lv_obj_set_align(lv_button_1, LV_ALIGN_BOTTOM_MID);
+        lv_obj_set_x(lv_button_1, (COG_BUTTON_SIZE + SPACE_XS) / 2);
+        lv_obj_set_y(lv_button_1, -18);
+        lv_obj_add_style(lv_button_1, &style_cog, 0);
+        lv_obj_add_style(lv_button_1, &style_cog_pressed, LV_STATE_PRESSED);
+        lv_obj_t * lv_image_0 = lv_image_create(lv_button_1);
         lv_image_set_src(lv_image_0, icon_cog);
         lv_obj_set_align(lv_image_0, LV_ALIGN_CENTER);
 
-        lv_obj_add_screen_create_event(lv_button_0, LV_EVENT_CLICKED, settings_screen_create, LV_SCREEN_LOAD_ANIM_FADE_IN, 200, 0);
+        lv_obj_add_screen_create_event(lv_button_1, LV_EVENT_CLICKED, settings_screen_create, LV_SCREEN_LOAD_ANIM_FADE_IN, 200, 0);
 
         the_root = lv_obj_0;
     }
@@ -562,7 +652,25 @@ static void lean_screen_lv_label_3_text_binding_cb(lv_observer_t * observer, lv_
     lv_label_set_text(obj, lv_subject_get_int(subject_lean_max_right) == 0 ? "--°" : eval_buf_1);
 }
 
+static void lean_screen_lv_label_4_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_hidden(obj, lv_subject_get_int(subject_clock_hour) == 0);
+}
+
 static void lean_screen_lv_label_4_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    char eval_buf_1[LV_XML_EVAL_STRING_BUF_SIZE];
+    char eval_buf_2[LV_XML_EVAL_STRING_BUF_SIZE];
+    lv_snprintf(eval_buf_1, sizeof(eval_buf_1), "%d%s%d%d%s", (int)(lv_subject_get_int(subject_clock_hour)), ":", (int)(lv_subject_get_int(subject_clock_min) / 10), (int)(lv_subject_get_int(subject_clock_min) % 10), " PM");
+    lv_snprintf(eval_buf_2, sizeof(eval_buf_2), "%d%s%d%d%s", (int)(lv_subject_get_int(subject_clock_hour)), ":", (int)(lv_subject_get_int(subject_clock_min) / 10), (int)(lv_subject_get_int(subject_clock_min) % 10), " AM");
+    lv_label_set_text(obj, lv_subject_get_int(subject_clock_pm) == 1 ? eval_buf_1 : eval_buf_2);
+}
+
+static void lean_screen_lv_label_5_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
@@ -571,28 +679,28 @@ static void lean_screen_lv_label_4_text_binding_cb(lv_observer_t * observer, lv_
     lv_label_set_text(obj, eval_buf_1);
 }
 
-static void lean_screen_lv_label_4_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_5_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_style_enabled(obj, lean_screen_style_lean_value_warn_ref, 0, lv_subject_get_int(subject_lean_abs_deg) >= LEAN_WARN);
 }
 
-static void lean_screen_lv_label_4_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_5_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_style_enabled(obj, lean_screen_style_lean_value_danger_ref, 0, lv_subject_get_int(subject_lean_abs_deg) >= LEAN_DANGER);
 }
 
-static void lean_screen_lv_label_5_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_6_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_hidden(obj, lv_subject_get_int(subject_imu_calibrating) == 0);
 }
 
-static void lean_screen_lv_label_6_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_7_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
@@ -601,28 +709,28 @@ static void lean_screen_lv_label_6_text_binding_cb(lv_observer_t * observer, lv_
     lv_label_set_text(obj, eval_buf_1);
 }
 
-static void lean_screen_lv_label_6_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
-{
-    LV_UNUSED(subject);
-    lv_obj_t * obj = lv_observer_get_target_obj(observer);
-    lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 0);
-}
-
 static void lean_screen_lv_label_7_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
-    lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 1);
+    lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 0);
 }
 
 static void lean_screen_lv_label_8_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 1);
+}
+
+static void lean_screen_lv_label_9_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 0);
 }
 
-static void lean_screen_lv_label_9_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_10_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
@@ -631,14 +739,14 @@ static void lean_screen_lv_label_9_text_binding_cb(lv_observer_t * observer, lv_
     lv_label_set_text(obj, eval_buf_1);
 }
 
-static void lean_screen_lv_label_9_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_10_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_hidden(obj, lv_subject_get_int(subject_gps_fix) == 1 || lv_subject_get_int(subject_gps_sats) < 0);
 }
 
-static void lean_screen_lv_label_10_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_11_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
@@ -652,7 +760,7 @@ static void lean_screen_lv_obj_4_hidden_binding_cb(lv_observer_t * observer, lv_
     lv_obj_set_hidden(obj, lv_subject_get_int(subject_show_g_bar) == 0);
 }
 
-static void lean_screen_lv_label_11_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+static void lean_screen_lv_label_12_text_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
 {
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
@@ -666,5 +774,46 @@ static void lean_screen_lv_bar_0_style_enabled_cb(lv_observer_t * observer, lv_s
     LV_UNUSED(subject);
     lv_obj_t * obj = lv_observer_get_target_obj(observer);
     lv_obj_set_style_enabled(obj, lean_screen_style_g_fill_brake_ref, LV_PART_INDICATOR, lv_subject_get_int(subject_accel_cg) < 0);
+}
+
+static void lean_screen_lv_obj_8_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_style_enabled(obj, lean_screen_style_rec_ring_on_ref, 0, lv_subject_get_int(subject_log_state) == 1);
+}
+
+static void lean_screen_lv_obj_8_style_enabled_cb_2(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_style_enabled(obj, lean_screen_style_rec_ring_error_ref, 0, lv_subject_get_int(subject_log_state) == 2);
+}
+
+static void lean_screen_lv_obj_9_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_hidden(obj, lv_subject_get_int(subject_log_state) == 2);
+}
+
+static void lean_screen_lv_obj_9_style_enabled_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_style_enabled(obj, lean_screen_style_rec_dot_on_ref, 0, lv_subject_get_int(subject_log_state) == 1);
+}
+
+static void lean_screen_lv_label_15_hidden_binding_cb(lv_observer_t * observer, lv_subject_t * subject)
+{
+    LV_UNUSED(subject);
+    lv_obj_t * obj = lv_observer_get_target_obj(observer);
+    lv_obj_set_hidden(obj, lv_subject_get_int(subject_log_state) != 2);
+}
+
+static void lean_screen_set_subject_cb_3(lv_event_t * e)
+{
+    LV_UNUSED(e);
+    lv_subject_set_int(subject_log_request, 1);
 }
 

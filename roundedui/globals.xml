@@ -67,10 +67,23 @@
         <!-- Satellites in view while searching; -1 when the GPS module is not answering -->
         <int name="subject_gps_sats" value="-1" min_value="-1" max_value="99"/>
 
+        <!-- ===== Written by the firmware: clock, local time, set from the GPS ===== -->
+        <!-- Hour in 12 hour format, 1-12. 0 = the clock isn't set yet (no GPS time since power on) -->
+        <int name="subject_clock_hour" value="0" min_value="0" max_value="12"/>
+        <int name="subject_clock_min" value="0" min_value="0" max_value="59"/>
+        <!-- 1 = PM, 0 = AM -->
+        <int name="subject_clock_pm" value="0" min_value="0" max_value="1"/>
+
         <!-- ===== Written by the firmware: battery ===== -->
         <int name="subject_battery_pct" value="100" min_value="0" max_value="100"/>
         <!-- 1 while the charger is charging the battery -->
         <int name="subject_battery_charging" value="0" min_value="0" max_value="1"/>
+
+        <!-- ===== Ride logger (CSV on the SD card) ===== -->
+        <!-- Request: the record button sets it to 1, the firmware starts or stops and sets it back to 0 -->
+        <int name="subject_log_request" value="0" min_value="0" max_value="1"/>
+        <!-- Written by the firmware: 0 = not recording, 1 = recording, 2 = no SD card / write failed -->
+        <int name="subject_log_state" value="0" min_value="0" max_value="2"/>
 
         <!-- ===== Settings: requests and preferences =====
              Requests: the UI sets them to 1, the firmware acts and sets them back to 0 -->

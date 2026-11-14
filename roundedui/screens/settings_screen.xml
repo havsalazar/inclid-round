@@ -1,63 +1,81 @@
 <!-- Settings for the round 466x466 AMOLED: calibrate the GPS and the inclinometer,
      brightness, show/hide the G bar, power off. BACK returns to the lean screen.
-     A centered column: the widest items sit in the middle, where the circle is widest. -->
+     Large buttons for gloved fingers, in a centered column that scrolls vertically.
+     Only that column scrolls, not the whole screen: a scroll frame redraws a 344 px
+     wide strip instead of all 466 px, and the black sides are never redrawn.
+     The top and bottom padding let the first and last button scroll toward the middle,
+     where the circle is widest. No scrollbar: the round edge would cut it off. -->
 <screen>
 	<consts>
-		<int name="menu_button_width" value="270"/>
-		<int name="menu_button_height" value="46"/>
+		<!-- 340 px fits "CALIBRATE INCLINOMETER" (312 px in font_title) plus the padding -->
+		<int name="menu_button_width" value="340"/>
+		<int name="menu_button_height" value="60"/>
+		<!-- The scrolling column: as narrow as the buttons, plus room for their 2 px border -->
+		<int name="menu_column_width" value="{menu_button_width + 4}"/>
+		<int name="menu_gap" value="20"/>
+		<int name="menu_pad_top" value="30"/>
+		<int name="menu_pad_bottom" value="110"/>
 	</consts>
 
 	<styles>
 		<style name="style_title" text_color="{color_accent_text}" text_font="font_title"/>
 	</styles>
 
-	<view extends="lv_obj" flex_flow="column" scrollable="false"
-		style_flex_main_place="center" style_flex_cross_place="center"
-		style_flex_track_place="center" style_pad_row="10">
+	<view extends="lv_obj" scrollable="false">
 		<style name="style_screen"/>
 
-		<lv_label text="SETTINGS">
-			<style name="style_title"/>
-		</lv_label>
+		<!-- The scrolling column. Local style properties win over style_transparent's pad_all="0" -->
+		<lv_obj width="{menu_column_width}" height="100%" align="center" flex_flow="column"
+			scrollable="true" scroll_dir="ver" scrollbar_mode="off" scroll_momentum="true"
+			style_flex_main_place="start" style_flex_cross_place="center"
+			style_flex_track_place="center" style_pad_row="{menu_gap}"
+			style_pad_top="{menu_pad_top}" style_pad_bottom="{menu_pad_bottom}">
+			<style name="style_transparent"/>
 
-		<!-- GPS: the firmware resets the receiver and searches again, setting
-		     subject_gps_calibrating while it works -->
-		<pill_button width="{menu_button_width}" height="{menu_button_height}"
-			text="{subject_gps_calibrating == 1 ? 'SEARCHING GPS...' : 'CALIBRATE GPS'}"
-			disabled="{subject_gps_calibrating == 1}">
-			<set_subject_event subject="subject_gps_cal_request" value="1"/>
-		</pill_button>
+			<!-- In the column, not floating: it scrolls away with the buttons -->
+			<battery_indicator/>
 
-		<!-- Inclinometer: keep the bike upright and still; disabled while the firmware calibrates -->
-		<pill_button width="{menu_button_width}" height="{menu_button_height}"
-			text="{subject_imu_calibrating == 1 ? 'HOLD STILL...' : 'CALIBRATE INCLINOMETER'}"
-			disabled="{subject_imu_calibrating == 1}">
-			<set_subject_event subject="subject_imu_cal_request" value="1"/>
-		</pill_button>
+			<lv_label text="SETTINGS">
+				<style name="style_title"/>
+			</lv_label>
 
-		<!-- Brightness: each tap steps 25 -> 50 -> 75 -> 100 -> 25 % -->
-		<pill_button width="{menu_button_width}" height="{menu_button_height}"
-			text="{'BRIGHTNESS ' . subject_brightness_pct . '%'}">
-			<set_subject_event subject="subject_brightness_pct"
-				value="{subject_brightness_pct GE 100 ? 25 : subject_brightness_pct + 25}"/>
-		</pill_button>
+			<!-- GPS: the firmware resets the receiver and searches again, setting
+			     subject_gps_calibrating while it works -->
+			<pill_button width="{menu_button_width}" height="{menu_button_height}"
+				text="{subject_gps_calibrating == 1 ? 'SEARCHING GPS...' : 'CALIBRATE GPS'}"
+				disabled="{subject_gps_calibrating == 1}">
+				<set_subject_event subject="subject_gps_cal_request" value="1"/>
+			</pill_button>
 
-		<!-- Show / hide the G bar on the lean screen -->
-		<pill_button width="{menu_button_width}" height="{menu_button_height}"
-			text="{subject_show_g_bar == 1 ? 'G-FORCE BAR: ON' : 'G-FORCE BAR: OFF'}">
-			<set_subject_event subject="subject_show_g_bar" value="{!subject_show_g_bar}"/>
-		</pill_button>
+			<!-- Inclinometer: keep the bike upright and still; disabled while the firmware calibrates -->
+			<pill_button width="{menu_button_width}" height="{menu_button_height}"
+				text="{subject_imu_calibrating == 1 ? 'HOLD STILL...' : 'CALIBRATE INCLINOMETER'}"
+				disabled="{subject_imu_calibrating == 1}">
+				<set_subject_event subject="subject_imu_cal_request" value="1"/>
+			</pill_button>
 
-		<!-- Power off only on a long press, so a stray touch can't turn it off -->
-		<pill_button width="{menu_button_width}" height="{menu_button_height}" tone="danger"
-			text="{subject_power_off_request == 1 ? 'POWERING OFF...' : 'HOLD TO POWER OFF'}">
-			<set_subject_event trigger="long_pressed" subject="subject_power_off_request" value="1"/>
-		</pill_button>
+			<!-- Brightness: each tap steps 25 -> 50 -> 75 -> 100 -> 25 % -->
+			<pill_button width="{menu_button_width}" height="{menu_button_height}"
+				text="{'BRIGHTNESS ' . subject_brightness_pct . '%'}">
+				<set_subject_event subject="subject_brightness_pct"
+					value="{subject_brightness_pct GE 100 ? 25 : subject_brightness_pct + 25}"/>
+			</pill_button>
 
-		<pill_button width="110" height="40" text="BACK">
-			<screen_create_event screen="lean_screen" anim_type="fade_in" duration="200"/>
-		</pill_button>
+			<!-- Show / hide the G bar on the lean screen -->
+			<pill_button width="{menu_button_width}" height="{menu_button_height}"
+				text="{subject_show_g_bar == 1 ? 'G-FORCE BAR: ON' : 'G-FORCE BAR: OFF'}">
+				<set_subject_event subject="subject_show_g_bar" value="{!subject_show_g_bar}"/>
+			</pill_button>
 
-		<battery_indicator floating="true" align="top_mid" y="18"/>
+			<!-- Power off only on a long press, so a stray touch can't turn it off -->
+			<pill_button width="{menu_button_width}" height="{menu_button_height}" tone="danger"
+				text="{subject_power_off_request == 1 ? 'POWERING OFF...' : 'HOLD TO POWER OFF'}">
+				<set_subject_event trigger="long_pressed" subject="subject_power_off_request" value="1"/>
+			</pill_button>
+
+			<pill_button width="160" height="54" text="BACK">
+				<screen_create_event screen="lean_screen" anim_type="fade_in" duration="200"/>
+			</pill_button>
+		</lv_obj>
 	</view>
 </screen>
