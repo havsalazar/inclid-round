@@ -6,6 +6,8 @@
 #ifndef IMU_TASK_H
 #define IMU_TASK_H
 
+#include <stdbool.h>
+#include <stdint.h>
 #include "driver/i2c_master.h"
 #include "esp_err.h"
 
@@ -25,6 +27,12 @@ esp_err_t imu_task_start(i2c_master_bus_handle_t bus);
  * subject_imu_cal_request. Call once with the LVGL lock held.
  */
 void imu_ui_bind(void);
+
+/**
+ * Latest lean (tenths of a degree, + = right) and longitudinal g (1/100 g,
+ * + = accelerating). Thread safe, from any task. Returns false while calibrating.
+ */
+bool imu_get(int32_t * lean_x10, int32_t * accel_cg);
 
 /** Put the QMI8658 to sleep before powering off */
 void imu_sleep(void);

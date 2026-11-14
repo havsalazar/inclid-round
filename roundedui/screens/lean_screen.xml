@@ -3,7 +3,8 @@
      The rim:   left arc = lean to the left, right arc = lean to the right. Both fill
                 upward from the bottom: blue up to lean_warn, amber up to lean_danger,
                 red beyond. A thin red stripe outside each arc marks the danger zone.
-     The center, top to bottom: battery, big lean angle, GPS speed, G bar, settings cog.
+     The center, top to bottom: battery, clock, big lean angle, GPS speed, G bar, and at the
+     bottom the record button (ride log on the SD card) next to the settings cog.
      Max lean per side sits inside each arc. Long-press anywhere to reset the max values.
 
      The screen is a circle, so items are placed by their offset from the center
@@ -23,6 +24,9 @@
 		<int name="lean_arc_size" value="{display_size - 2 * lean_arc_inset - 10}"/>
 		<int name="danger_arc_width" value="4"/>
 		<int name="cog_button_size" value="60"/>
+		<!-- Record button, the same size as the cog: a ring with a dot (or a square while recording) -->
+		<int name="rec_ring_size" value="34"/>
+		<int name="rec_dot_size" value="16"/>
 	</consts>
 
 	<styles>
@@ -65,6 +69,17 @@
 		<style name="style_cog" bg_opa="0" border_width="0" shadow_width="0" radius="{cog_button_size / 2}"
 			pad_all="0"/>
 		<style name="style_cog_pressed" bg_color="{color_track}" bg_opa="100%"/>
+
+		<!-- Record button: grey ring + red dot = ready; red ring + red square = recording
+		     (press to stop); amber ring + "SD" = no card or the card failed -->
+		<style name="style_rec_ring" bg_opa="0" border_width="3" border_color="{color_text_muted}"
+			radius="{rec_ring_size / 2}" pad_all="0"/>
+		<style name="style_rec_ring_on" border_color="{color_danger}" bg_color="{color_danger}"
+			bg_opa="25%"/>
+		<style name="style_rec_ring_error" border_color="{color_warn}"/>
+		<style name="style_rec_dot" bg_color="{color_danger}" bg_opa="100%" border_width="0"
+			radius="{rec_dot_size / 2}" pad_all="0"/>
+		<style name="style_rec_dot_on" radius="3"/>
 	</styles>
 
 	<view extends="lv_obj" scrollable="false">
@@ -178,6 +193,14 @@
 		<!-- ============ Battery, top center ============ -->
 		<battery_indicator align="top_mid" y="26"/>
 
+		<!-- Clock under the battery, "3:07 PM". Hidden until the GPS has set the time.
+		     The ternary has to be outermost: a `( ? : )` inside a concatenation is
+		     exported as a true/false test and shows "true" -->
+		<lv_label align="top_mid" y="50" hidden="{subject_clock_hour == 0}"
+			text="{subject_clock_pm == 1 ? subject_clock_hour . ':' . subject_clock_min / 10 . subject_clock_min % 10 . ' PM' : subject_clock_hour . ':' . subject_clock_min / 10 . subject_clock_min % 10 . ' AM'}">
+			<style name="style_text_muted"/>
+		</lv_label>
+
 		<!-- ============ Lean angle, just above the center ============ -->
 		<lv_label align="center" y="-52" text="{subject_lean_abs_deg . '°'}">
 			<style name="style_lean_value"/>
@@ -259,8 +282,35 @@
 			</lv_obj>
 		</lv_obj>
 
-		<!-- ============ Settings cog, bottom center ============ -->
-		<lv_button width="{cog_button_size}" height="{cog_button_size}" align="bottom_mid" y="-18">
+		<!-- ============ Record button, left of the cog ============
+		     Starts and stops the ride log on the SD card. The children are not clickable,
+		     so a press anywhere on the 60 px button reaches it. -->
+		<lv_button width="{cog_button_size}" height="{cog_button_size}" align="bottom_mid"
+			x="{0 - (cog_button_size + space_xs) / 2}" y="-18">
+			<style name="style_cog"/>
+			<style name="style_cog_pressed" selector="pressed"/>
+			<lv_obj width="{rec_ring_size}" height="{rec_ring_size}" align="center" clickable="false"
+				scrollable="false">
+				<style name="style_rec_ring"/>
+				<style name="style_rec_ring_on" enabled="{subject_log_state == 1}"/>
+				<style name="style_rec_ring_error" enabled="{subject_log_state == 2}"/>
+				<lv_obj width="{rec_dot_size}" height="{rec_dot_size}" align="center" clickable="false"
+					scrollable="false" hidden="{subject_log_state == 2}">
+					<style name="style_rec_dot"/>
+					<style name="style_rec_dot_on" enabled="{subject_log_state == 1}"/>
+				</lv_obj>
+				<lv_label text="SD" align="center" hidden="{subject_log_state != 2}"
+					style_text_color="{color_warn}">
+					<style name="style_text_muted"/>
+				</lv_label>
+			</lv_obj>
+			<set_subject_event subject="subject_log_request" value="1"/>
+		</lv_button>
+
+		<!-- ============ Settings cog, right of the record button ============
+		     The two buttons are centered together at the bottom -->
+		<lv_button width="{cog_button_size}" height="{cog_button_size}" align="bottom_mid"
+			x="{(cog_button_size + space_xs) / 2}" y="-18">
 			<style name="style_cog"/>
 			<style name="style_cog_pressed" selector="pressed"/>
 			<lv_image src="icon_cog" align="center"/>

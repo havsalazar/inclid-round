@@ -4,6 +4,7 @@
 #include "settings.h"
 #include "imu_task.h"
 #include "pmu.h"
+#include "logger.h"
 
 #include "esp_log.h"
 #include "nvs_flash.h"
@@ -30,6 +31,7 @@ static void power_off_timer_cb(lv_timer_t * t)
 {
     LV_UNUSED(t);
     display_set_brightness(0);
+    logger_shutdown();              /* finish the ride file before the power goes */
     imu_sleep();
     pmu_power_off();                /* does not return */
 }

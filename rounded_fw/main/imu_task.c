@@ -311,6 +311,15 @@ void imu_ui_bind(void)
     lv_timer_create(ui_update_cb, 20, NULL);   /* 50 Hz */
 }
 
+bool imu_get(int32_t * lean_x10, int32_t * accel_cg)
+{
+    taskENTER_CRITICAL(&s_mux);
+    *lean_x10 = s_lean_x10;
+    *accel_cg = s_accel_cg;
+    taskEXIT_CRITICAL(&s_mux);
+    return !s_calibrating;
+}
+
 void imu_sleep(void)
 {
     if(s_dev) reg_write(REG_CTRL7, 0x00);           /* all sensors off */

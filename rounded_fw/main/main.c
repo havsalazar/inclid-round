@@ -17,6 +17,8 @@
 #include "imu_task.h"
 #include "pmu.h"
 #include "gps_task.h"
+#include "logger.h"
+#include "sd_serial.h"
 #include "settings.h"
 
 static const char * TAG = "main";
@@ -43,7 +45,13 @@ void app_main(void)
     imu_ui_bind();
     pmu_ui_bind();
     gps_ui_bind();
+    logger_ui_bind();                       /* record button: CSV on the SD card */
     bsp_display_unlock();
+
+    err = logger_start();
+    if(err != ESP_OK) ESP_LOGE(TAG, "Logger: %s", esp_err_to_name(err));
+    err = sd_serial_start();                /* tools/sdcard.py: read the logs over USB */
+    if(err != ESP_OK) ESP_LOGE(TAG, "SD over serial: %s", esp_err_to_name(err));
 
     /* First frame into the panel, then switch it on and fade up: no white flash */
     display_show();

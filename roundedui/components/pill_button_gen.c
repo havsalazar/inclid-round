@@ -81,12 +81,12 @@ lv_obj_t * pill_button_create(lv_obj_t * parent, const char * text)
         lv_style_set_bg_opa(&style_button, (255 * 100 / 100));
         lv_style_set_border_color(&style_button, COLOR_ACCENT);
         lv_style_set_border_width(&style_button, 2);
-        lv_style_set_radius(&style_button, 24);
+        lv_style_set_radius(&style_button, 30);
         lv_style_set_shadow_width(&style_button, 0);
         lv_style_set_pad_hor(&style_button, SPACE_MD);
         lv_style_set_pad_ver(&style_button, SPACE_XS);
         lv_style_set_text_color(&style_button, COLOR_TEXT);
-        lv_style_set_text_font(&style_button, font_small);
+        lv_style_set_text_font(&style_button, font_title);
         lv_style_set_bg_color(&style_button_pressed, COLOR_ACCENT);
         lv_style_set_border_color(&style_button_disabled, COLOR_WARN);
         lv_style_set_text_color(&style_button_disabled, COLOR_WARN);
@@ -113,7 +113,7 @@ lv_obj_t * pill_button_create(lv_obj_t * parent, const char * text)
         lv_obj_t * lv_button_0 = lv_button_create(parent);
         lv_obj_set_name_static(lv_button_0, "pill_button_#");
         lv_obj_add_event_cb(lv_button_0, pill_button_get_instance_cb, pill_button_get_instance_event, inst);
-        lv_obj_set_height(lv_button_0, 46);
+        lv_obj_set_height(lv_button_0, 60);
 
         lv_obj_add_style(lv_button_0, &style_button, 0);
         lv_obj_add_style(lv_button_0, &style_button_pressed, LV_STATE_PRESSED);

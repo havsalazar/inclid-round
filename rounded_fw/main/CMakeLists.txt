@@ -8,9 +8,10 @@ set(LV_EDITOR_PROJECT_SOURCES)
 include("${UI_DIR}/file_list_gen.cmake")
 
 idf_component_register(
-    SRCS "main.c" "display.c" "imu_task.c" "pmu.c" "gps_task.c" "settings.c" "i2c_lock.c" ${LV_EDITOR_PROJECT_SOURCES}
+    SRCS "main.c" "display.c" "imu_task.c" "pmu.c" "gps_task.c" "settings.c" "i2c_lock.c" "logger.c" "sd_serial.c" ${LV_EDITOR_PROJECT_SOURCES}
     INCLUDE_DIRS "." "${UI_DIR}"
-    REQUIRES esp_driver_i2c esp_driver_spi esp_lcd esp_timer nvs_flash)
+    REQUIRES esp_driver_i2c esp_driver_spi esp_lcd esp_timer nvs_flash fatfs vfs
+             esp_driver_usb_serial_jtag)
 
 # The exported code includes "lvgl.h" instead of "lvgl/lvgl.h" with this
 target_compile_definitions(${COMPONENT_LIB} PRIVATE LV_LVGL_H_INCLUDE_SIMPLE)
